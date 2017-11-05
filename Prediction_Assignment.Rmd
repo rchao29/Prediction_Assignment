@@ -1,0 +1,81 @@
+---
+title: "Prediction Assignment"
+author: "RC"
+date: "5 November 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Preparation
+
+Read in the training and test datasets.
+```{r}
+training <- read.csv("pml-training.csv", na.strings = c("NA", "#DIV/0!"))
+testing <- read.csv("pml-testing.csv", na.strings = c("NA", "#DIV/0!"))
+```
+
+Clean the datasets, removing columns with missing data (NAs).
+```{r}
+training <- training[, colSums(is.na(training)) == 0]
+testing <- testing[, colSums(is.na(testing)) == 0]
+```
+
+Remove the first 7 columns in each dataset as they do not contain data that can be used for predictions (X, user_name, raw_timestamp_part_1, raw_timestamp_part_2, cvtd_timestamp, new_window, num_window).
+```{r}
+training <- training[, -c(1:7)]
+testing <- testing[, -c(1:7)]
+```
+
+Split the datasets into further training and testing sets for prediction. 
+```{r message=FALSE, echo=FALSE}
+set.seed(1234)
+suppressWarnings(library(caret))
+inTrain <- createDataPartition(y=training$classe, p=0.75, list=FALSE)
+training_new <- training[inTrain,]
+testing_new <- training[-inTrain,]
+```
+
+## Model Prediction
+We will try fitting a linear discriminant analysis (LDA) and gradient boosting (GBM) models.
+```{r}
+fit_Control <- trainControl(method="cv", number = 5, allowParallel = TRUE)
+
+fit_LDA <- train(classe ~ ., data=training_new, method="lda", trControl = fit_Control)
+
+fit_GBM <- train(classe ~ ., data=training_new, method="gbm", trControl = fit_Control, verbose = FALSE)
+```
+
+### Now, we test the accurary of our models on the training data and testing data.
+
+LDA Model
+```{r}
+prediction_LDA <- predict(fit_LDA, training_new)
+confusionMatrix(prediction_LDA, training_new$classe)$overall[1]
+
+prediction_LDA_test <- predict(fit_LDA, testing_new)
+confusionMatrix(prediction_LDA_test, testing_new$classe)$overall[1]
+
+```
+
+GBM Model
+```{r}
+prediction_GBM <- predict(fit_GBM, training_new)
+confusionMatrix(prediction_GBM, training_new$classe)$overall[1]
+
+prediction_GBM_test <- predict(fit_GBM, testing_new)
+confusionMatrix(prediction_GBM_test, testing_new$classe)$overall[1]
+```
+
+We see from this that the latter GBM model has much higher accuracy.
+
+### Lastly, we make predictions on the original testing set.
+
+We will use the more accurage GBM model.
+
+```{r}
+predict_GBM <- predict(fit_GBM, testing)
+predict_GBM
+```

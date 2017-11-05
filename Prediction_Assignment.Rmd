@@ -59,6 +59,7 @@ prediction_LDA_test <- predict(fit_LDA, testing_new)
 confusionMatrix(prediction_LDA_test, testing_new$classe)$overall[1]
 
 ```
+We see an accuracy of approximately 70% for both test sets.
 
 GBM Model
 ```{r}
@@ -69,13 +70,14 @@ prediction_GBM_test <- predict(fit_GBM, testing_new)
 confusionMatrix(prediction_GBM_test, testing_new$classe)$overall[1]
 ```
 
-We see from this that the latter GBM model has much higher accuracy.
+We see an accuracy of approximately 96% for both test sets, much higher than the LDA.
 
 ### Lastly, we make predictions on the original testing set.
 
-We will use the more accurage GBM model.
+We will use the more accurate GBM model.
 
 ```{r}
 predict_GBM <- predict(fit_GBM, testing)
 predict_GBM
 ```
+Predictions for the 20 cases: [1] B A B A A E D B A A B C B A E E A B B B
